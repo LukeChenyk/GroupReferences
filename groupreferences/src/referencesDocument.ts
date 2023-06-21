@@ -24,14 +24,7 @@ export class ReferencesDocument
             enumerable: true,
                 configurable: true
     });
-Object.defineProperty(ReferencesDocument.prototype, "links", {
-    get: function ()
-    {
-        return this._links;
-    },
-    enumerable: true,
-    configurable: true
-});
+
 
 get links(){
     return this._links;
