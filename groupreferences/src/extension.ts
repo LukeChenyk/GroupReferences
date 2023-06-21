@@ -39,6 +39,9 @@ export function activate(context: vscode.ExtensionContext)
 	{
 		vscode.window.showInformationMessage(args);
 	});
+
+
+	var providerRegistrations = vscode.Disposable.from(vscode.workspace.registerTextDocumentContentProvider(provider_1.default.scheme, provider), vscode.languages.registerDocumentLinkProvider({ scheme: provider_1.default.scheme }, provider));
 }
 
 function toLowerCase()

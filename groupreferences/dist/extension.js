@@ -112,6 +112,7 @@ function activate(context) {
     vscode.commands.registerCommand("sidebar_test_id1.openChild", args => {
         vscode.window.showInformationMessage(args);
     });
+    var providerRegistrations = vscode.Disposable.from(vscode.workspace.registerTextDocumentContentProvider(provider_1.default.scheme, provider), vscode.languages.registerDocumentLinkProvider({ scheme: provider_1.default.scheme }, provider));
 }
 exports.activate = activate;
 function toLowerCase() {
