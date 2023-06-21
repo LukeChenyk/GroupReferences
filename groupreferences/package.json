@@ -9,13 +9,72 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onView:sidebar_test_id1"
+  ],
   "main": "./dist/extension.js",
   "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "sidebar_test",
+          "title": "引用分组",
+          "icon": "sidebar.svg"
+        }
+      ]
+    },
+    "views": {
+      "sidebar_test": [
+        {
+          "id": "sidebar_test_id1",
+          "name": "read 区域"
+        },
+        {
+          "id": "sidebar_test_id2",
+          "name": "write 区域"
+        }
+      ],
+      "explorer": [
+        {
+          "id": "referenceSearchView",
+          "name": "引用分组"
+        }
+      ]
+    },
     "commands": [
       {
         "command": "groupreferences.helloWorld",
         "title": "Hello World"
+      },
+      {
+        "command": "extension.toLowerCase",
+        "title": "Lower"
+      },
+      {
+        "command": "extension.toUpperCase",
+        "title": "Upper"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "when": "editorHasSelection && editorTextFocus",
+          "command": "extension.toLowerCase",
+          "group": "modification"
+        },
+        {
+          "when": "editorHasSelection && editorTextFocus",
+          "command": "extension.toUpperCase",
+          "group": "modification"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "extension.toUpperCase",
+        "key": "ctrl+shift+u",
+        "mac": "cmd+shift+u",
+        "when": "editorTextFocus"
       }
     ]
   },
