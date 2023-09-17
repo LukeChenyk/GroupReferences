@@ -1,39 +1,262 @@
 import * as vscode from 'vscode';
 
-// 树节点
-export class EntryItem extends vscode.TreeItem
+export interface NodeInfo
 {
+    uri: vscode.Uri
+    name: string | vscode.TreeItemLabel,
+    isFile: boolean
+    line?: number
+    range?: vscode.Range
+}
+
+export interface LocationSource
+{
+    loc: vscode.Location
+    lineText: string
+    isWrite?: boolean
+}
+
+// 树节点
+export class NodeItem extends vscode.TreeItem
+{
+    info: NodeInfo
+
+    constructor(info: NodeInfo)
+    {
+        super(info.name, info.isFile ? vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.None)
+        this.info = info;
+
+        if (info.isFile == false)
+        {
+            const showDocOptions = {
+                preserveFocus: false,
+                preview: false,
+                // viewColumn: 1,
+
+                selection: info.range
+            };
+            this.command = {
+                command: "vscode.open", //命令id
+                title: "标题",
+                arguments: [info.uri, showDocOptions] //命令接收的参数
+            };
+        } else
+        {
+            this.iconPath = vscode.ThemeIcon.File;
+            this.description = info.uri.fsPath;
+            this.tooltip = info.uri.fsPath;
+        }
+    }
 }
 
 //树的内容组织管理
-export class EntryList implements vscode.TreeDataProvider<EntryItem>
+export class TreeProvider implements vscode.TreeDataProvider<NodeInfo>
 {
-    onDidChangeTreeData?: vscode.Event<void | EntryItem | null | undefined> | undefined;
 
-    getTreeItem(element: EntryItem): vscode.TreeItem | Thenable<vscode.TreeItem>
+
+    private refreshEvent: vscode.EventEmitter<NodeInfo | null | undefined> = new vscode.EventEmitter<NodeInfo | null | undefined>();
+
+    onDidChangeTreeData?: vscode.Event<void | NodeInfo | null | undefined> | undefined = this.refreshEvent.event;
+
+    public dataSources: LocationSource[] = []
+
+    private _isWriteTree: boolean = false;
+
+    constructor(isWrite: boolean)
     {
-        return element;
+        this._isWriteTree = isWrite;
     }
-    getChildren(element?: EntryItem): vscode.ProviderResult<EntryItem[]>
+
+    Refresh()
     {
-        if (element)
-        {//子节点
-            var childs = [];
-            for (let index = 0; index < 3; index++)
+        this.refreshEvent?.fire(null);
+    }
+
+    getTreeItem(element: NodeInfo): vscode.TreeItem | Thenable<vscode.TreeItem>
+    {
+        let item = new NodeItem(element);
+        return item;
+    }
+    getChildren(nodeInfo?: NodeInfo): vscode.ProviderResult<NodeInfo[]>
+    {
+
+        if (this.dataSources.length == 0)
+        {
+            return null;
+        }
+
+        if (nodeInfo)
+        {
+            if (nodeInfo.isFile == false)
             {
-                let str = index.toString();
-                var item = new EntryItem(str, vscode.TreeItemCollapsibleState.None);
-                item.command = {
-                    command: "sidebar_test_id1.openChild", //命令id
-                    title: "标题",
-                    arguments: [str] //命令接收的参数
-                };
-                childs[index] = item;
+                return null
             }
-            return childs;
+            let children = [];
+            for (let index = 0; index < this.dataSources.length; index++)
+            {
+                let locSource = this.dataSources[index];
+                let loc = locSource.loc;
+                let uri = loc.uri;
+
+                if (this._isWriteTree)
+                {
+                    if (!locSource.isWrite)
+                    {
+                        continue;
+                    }
+                } else
+                {
+                    if (locSource.isWrite == true)
+                    {
+                        continue;
+                    }
+                }
+
+                if (uri.toString() != nodeInfo.uri.toString())
+                {
+                    continue;
+                }
+
+
+                let treeItemLabel: vscode.TreeItemLabel = {
+                    label: locSource.lineText,
+                    highlights: [[loc.range.start.character, loc.range.end.character]]
+                }
+
+                let info: NodeInfo = {
+                    uri: uri,
+                    name: treeItemLabel,
+                    isFile: false,
+                    line: loc.range.start.line,
+                    range: loc.range
+                }
+                children.push(info);
+            }
+
+            children.sort((a, b) =>
+            {
+                a.line = a.line ? a.line : 0;
+                b.line = b.line ? b.line : 0;
+                return a.line - b.line;
+            })
+            return children;
         } else
-        { //根节点
-            return [new EntryItem("root", vscode.TreeItemCollapsibleState.Collapsed)];
+        {
+            let children = [];
+            var fileSet = new Set<string>();
+            for (let index = 0; index < this.dataSources.length; index++)
+            {
+                let locSource = this.dataSources[index];
+                let loc = locSource.loc;
+                let uri = loc.uri;
+
+                if (this._isWriteTree)
+                {
+                    if (!locSource.isWrite)
+                    {
+                        continue;
+                    }
+                } else
+                {
+                    if (locSource.isWrite == true)
+                    {
+                        continue;
+                    }
+                }
+
+                if (fileSet.has(uri.toString()))
+                {
+                    continue;
+                }
+                let info: NodeInfo = {
+                    uri: uri,
+                    name: this.getFileNameByPath(uri.path),
+                    isFile: true
+                }
+
+                fileSet.add(uri.toString());
+
+                children.push(info);
+            }
+            return children;
         }
     }
+
+    public SetDataSources(Locations: vscode.Location[])
+    {
+        this.dataSources.length = 0;
+        for (let index = 0; index < Locations.length; index++)
+        {
+            const loc = Locations[index];
+            const locSource: LocationSource = {
+                loc: loc,
+                lineText: ""
+            }
+            this.dataSources.push(locSource);
+        }
+
+        this.ProcessLocations()
+    }
+
+
+    private ProcessLocations()
+    {
+        let processCount = 0
+        for (let index = 0; index < this.dataSources.length; index++)
+        {
+            let locSource = this.dataSources[index];
+            let loc = locSource.loc;
+            let uri = loc.uri;
+
+            vscode.workspace.openTextDocument(uri).then((doc: vscode.TextDocument) =>
+            {
+                locSource.lineText = this._appendMatch(doc, loc.range.start.line);
+                vscode.commands.executeCommand('vscode.executeDocumentHighlights', uri, loc.range.start).then((args: any) =>
+                {
+
+                    let documentHighlight: vscode.DocumentHighlight[] = args
+
+                    for (let I = 0; I < documentHighlight.length; I++)
+                    {
+                        const element = documentHighlight[I];
+                        if (loc.range.isEqual(element.range))
+                        {
+                            if (element.kind == vscode.DocumentHighlightKind.Write)
+                            {
+                                locSource.isWrite = true;
+                            }
+                        }
+                    }
+                    processCount++
+
+                    if (processCount >= this.dataSources.length)
+                    {
+                        this.Refresh();
+                    }
+                })
+            })
+        }
+    }
+
+
+    _appendMatch(doc: vscode.TextDocument, line: number)
+    {
+        var text = doc.lineAt(line).text;
+        return text
+    }
+
+    getFileNameByPath(path: string)
+    {
+        let index = path.lastIndexOf("\\");
+        if (index == -1)
+        {
+            index = path.lastIndexOf("/");
+        }
+        if (index != -1)
+        {
+            return path.substring(index + 1);
+        }
+        return path;
+    }
+
 }

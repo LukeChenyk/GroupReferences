@@ -2,6 +2,7 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 import * as sidebar from './Tree';
+import { Provider, decodeLocation, encodeLocation } from './provider';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -30,18 +31,58 @@ export function activate(context: vscode.ExtensionContext)
 	context.subscriptions.push(lowerCase);
 	context.subscriptions.push(upperCase);
 
+	// let referenceItemClkCmd = vscode.commands.registerCommand('groupreferences.referenceItemClk', OnReferenceItemClkCmd);
+	// context.subscriptions.push(referenceItemClkCmd);
+
 
 	//注册侧边栏面板的实现
-	const sidebar_test = new sidebar.EntryList();
-	vscode.window.registerTreeDataProvider("sidebar_test_id1", sidebar_test);
-	//注册命令 
-	vscode.commands.registerCommand("sidebar_test_id1.openChild", args =>
+	const readDataProvider = new sidebar.TreeProvider(false);
+	vscode.window.registerTreeDataProvider("sidebar_test_id1", readDataProvider);
+
+	const writeDataProvider = new sidebar.TreeProvider(true);
+	vscode.window.registerTreeDataProvider("sidebar_test_id2", writeDataProvider);
+
+
+	// //注册命令 
+	// vscode.commands.registerCommand("sidebar_test_id1.openChild", args =>
+	// {
+	// 	vscode.window.showInformationMessage(args);
+	// });
+
+	// var provider = new Provider()
+
+	// var providerRegistrations = vscode.Disposable.from(
+	// 	vscode.workspace.registerTextDocumentContentProvider(Provider.scheme, provider),
+	// 	vscode.languages.registerDocumentLinkProvider({ scheme: Provider.scheme }, provider));
+
+	var commandRegistration = vscode.commands.registerTextEditorCommand('extension.findAllReferences', function (editor: vscode.TextEditor)
 	{
-		vscode.window.showInformationMessage(args);
+		var uri = encodeLocation(editor.document.uri, editor.selection.active);
+		var _a = decodeLocation(uri), target = _a[0], pos = _a[1];
+
+		return vscode.commands.executeCommand('vscode.executeReferenceProvider', target, pos).then((locationList) =>
+		{
+			// sort by locations and shuffle to begin from target resource
+			var locations = locationList as vscode.Location[]
+			var idx = 0;
+			locations.sort(Provider._compareLocations).find(function (loc, i) { return loc.uri.toString() === target.toString() && (idx = i) && true; });
+			locations.push.apply(locations, locations.splice(0, idx));
+
+			readDataProvider.SetDataSources(locations)
+			writeDataProvider.SetDataSources(locations)
+		});
+
+
+		// var viewColumn = editor.viewColumn ? editor.viewColumn + 1 : undefined;
+		// return vscode.workspace.openTextDocument(uri).then((doc: vscode.TextDocument) =>
+		// {
+		// 	return vscode.window.showTextDocument(doc, viewColumn);
+		// });
 	});
+	// context.subscriptions.push(provider, commandRegistration, providerRegistrations);
 
+	context.subscriptions.push(commandRegistration)
 
-	var providerRegistrations = vscode.Disposable.from(vscode.workspace.registerTextDocumentContentProvider(provider_1.default.scheme, provider), vscode.languages.registerDocumentLinkProvider({ scheme: provider_1.default.scheme }, provider));
 }
 
 function toLowerCase()
@@ -73,6 +114,20 @@ function toLowerCaseOrUpperCase(command: string)
 			editBuilder.replace(selection, newWord);
 		});
 	}
+}
+
+function OnReferenceItemClkCmd(uri: vscode.Uri)
+{
+	// const showDocOptions = {
+	// 	preserveFocus: false,
+	// 	preview: false,
+	// 	viewColumn: 1,
+
+	// 	// replace with your line_number's
+	// 	selection: new vscode.Range(314, 0, 314, 0)
+	// };
+
+	// let doc = await vscode.window.showTextDocument(setting, showDocOptions);
 }
 
 // This method is called when your extension is deactivated

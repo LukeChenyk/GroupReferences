@@ -2,19 +2,22 @@
 // var vscode = require('vscode');
 // var referencesDocument_1 = require('./referencesDocument');
 import * as vscode from 'vscode';
+import { ReferencesDocument } from './referencesDocument';
 
-export class Provider
+export class Provider implements vscode.TextDocumentContentProvider, vscode.DocumentLinkProvider
 {
-    _onDidChange: vscode.EventEmitter<any>;
-    _documents: Map<string, vscode.TextDocument>;
+    static scheme = 'references';
+
+    _onDidChange: vscode.EventEmitter<vscode.Uri>;
+    _documents: Map<string, ReferencesDocument>;
     _editorDecoration: vscode.TextEditorDecorationType;
     _subscriptions: vscode.Disposable;
 
     constructor()
     {
         var _this = this;
-        this._onDidChange = new vscode.EventEmitter();
-        this._documents = new Map();
+        this._onDidChange = new vscode.EventEmitter<vscode.Uri>();
+        this._documents = new Map<string, ReferencesDocument>();
         this._editorDecoration = vscode.window.createTextEditorDecorationType({ textDecoration: 'underline' });
         // Listen to the following events:
         // * closeTextDocument - which means we must clear the corresponding model object - `ReferencesDocument`
@@ -42,7 +45,7 @@ export class Provider
      * resolves its content by (1) running the reference search command
      * and (2) formatting the results
      */
-    provideTextDocumentContent(uri: any)
+    provideTextDocumentContent(uri: vscode.Uri)
     {
         var _this = this;
         // already loaded?
@@ -56,19 +59,20 @@ export class Provider
         // From the result create a references document which is in charge of loading,
         // printing, and formatting references
         var _a = decodeLocation(uri), target = _a[0], pos = _a[1];
-        return vscode.commands.executeCommand('vscode.executeReferenceProvider', target, pos).then(function (locations)
+        return vscode.commands.executeCommand('vscode.executeReferenceProvider', target, pos).then((locationList) =>
         {
             // sort by locations and shuffle to begin from target resource
+            var locations = locationList as vscode.Location[]
             var idx = 0;
             locations.sort(Provider._compareLocations).find(function (loc, i) { return loc.uri.toString() === target.toString() && (idx = i) && true; });
             locations.push.apply(locations, locations.splice(0, idx));
             // create document and return its early state
-            var document = new referencesDocument_1.default(uri, locations, _this._onDidChange);
+            var document = new ReferencesDocument(uri, locations, _this._onDidChange);
             _this._documents.set(uri.toString(), document);
             return document.value;
         });
     }
-    static _compareLocations(a, b)
+    static _compareLocations(a: any, b: any)
     {
         if (a.uri.toString() < b.uri.toString())
         {
@@ -83,7 +87,7 @@ export class Provider
             return a.range.start.compareTo(b.range.start);
         }
     }
-    provideDocumentLinks(document, token)
+    provideDocumentLinks(document: any, token: any)
     {
         // While building the virtual document we have already created the links.
         // Those are composed from the range inside the document and a target uri
@@ -94,7 +98,6 @@ export class Provider
             return doc.links;
         }
     }
-    static scheme = 'references';
 }
 // var Provider = (function ()
 // {

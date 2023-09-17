@@ -43,6 +43,10 @@
     },
     "commands": [
       {
+        "command": "extension.findAllReferences",
+        "title": "Find All References yk"
+      },
+      {
         "command": "groupreferences.helloWorld",
         "title": "Hello World"
       },
@@ -53,10 +57,19 @@
       {
         "command": "extension.toUpperCase",
         "title": "Upper"
+      },
+      {
+        "command": "groupreferences.referenceItemClk",
+        "title": "referenceItemClk"
       }
     ],
     "menus": {
       "editor/context": [
+        {
+          "command": "extension.findAllReferences",
+          "when": "editorHasReferenceProvider",
+          "group": "navigation"
+        },
         {
           "when": "editorHasSelection && editorTextFocus",
           "command": "extension.toLowerCase",
