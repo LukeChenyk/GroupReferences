@@ -17,33 +17,27 @@
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "sidebar_test",
-          "title": "引用分组",
+          "id": "sidebar_groupreferences",
+          "title": "group references",
           "icon": "sidebar.svg"
         }
       ]
     },
     "views": {
-      "sidebar_test": [
+      "sidebar_groupreferences": [
         {
-          "id": "sidebar_test_id1",
-          "name": "read 区域"
+          "id": "sidebar_groupreferences_id1",
+          "name": "read list"
         },
         {
-          "id": "sidebar_test_id2",
-          "name": "write 区域"
-        }
-      ],
-      "explorer": [
-        {
-          "id": "referenceSearchView",
-          "name": "引用分组"
+          "id": "sidebar_groupreferences_id2",
+          "name": "write list"
         }
       ]
     },
     "commands": [
       {
-        "command": "extension.findAllReferences",
+        "command": "groupreferences.findAllReferences",
         "title": "Find All References yk"
       },
       {
@@ -66,7 +60,7 @@
     "menus": {
       "editor/context": [
         {
-          "command": "extension.findAllReferences",
+          "command": "groupreferences.findAllReferences",
           "when": "editorHasReferenceProvider",
           "group": "navigation"
         },

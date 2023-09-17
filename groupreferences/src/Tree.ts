@@ -224,6 +224,9 @@ export class TreeProvider implements vscode.TreeDataProvider<NodeInfo>
                             if (element.kind == vscode.DocumentHighlightKind.Write)
                             {
                                 locSource.isWrite = true;
+                            } else if (element.kind == vscode.DocumentHighlightKind.Read)
+                            {
+                                locSource.isWrite = false;
                             }
                         }
                     }

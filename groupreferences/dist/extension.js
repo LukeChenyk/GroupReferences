@@ -162,6 +162,9 @@ class TreeProvider {
                             if (element.kind == vscode.DocumentHighlightKind.Write) {
                                 locSource.isWrite = true;
                             }
+                            else if (element.kind == vscode.DocumentHighlightKind.Read) {
+                                locSource.isWrite = false;
+                            }
                         }
                     }
                     processCount++;
@@ -481,9 +484,9 @@ function activate(context) {
     // context.subscriptions.push(referenceItemClkCmd);
     //注册侧边栏面板的实现
     const readDataProvider = new sidebar.TreeProvider(false);
-    vscode.window.registerTreeDataProvider("sidebar_test_id1", readDataProvider);
+    vscode.window.registerTreeDataProvider("sidebar_groupreferences_id1", readDataProvider);
     const writeDataProvider = new sidebar.TreeProvider(true);
-    vscode.window.registerTreeDataProvider("sidebar_test_id2", writeDataProvider);
+    vscode.window.registerTreeDataProvider("sidebar_groupreferences_id2", writeDataProvider);
     // //注册命令 
     // vscode.commands.registerCommand("sidebar_test_id1.openChild", args =>
     // {
@@ -493,15 +496,17 @@ function activate(context) {
     // var providerRegistrations = vscode.Disposable.from(
     // 	vscode.workspace.registerTextDocumentContentProvider(Provider.scheme, provider),
     // 	vscode.languages.registerDocumentLinkProvider({ scheme: Provider.scheme }, provider));
-    var commandRegistration = vscode.commands.registerTextEditorCommand('extension.findAllReferences', function (editor) {
+    var commandRegistration = vscode.commands.registerTextEditorCommand('groupreferences.findAllReferences', function (editor) {
         var uri = (0, provider_1.encodeLocation)(editor.document.uri, editor.selection.active);
         var _a = (0, provider_1.decodeLocation)(uri), target = _a[0], pos = _a[1];
         return vscode.commands.executeCommand('vscode.executeReferenceProvider', target, pos).then((locationList) => {
+            //todo: 激活activity bar panel
+            // vscode.commands.executeCommand('workbench.view.extension.groupreferences-sidebar-view');
             // sort by locations and shuffle to begin from target resource
             var locations = locationList;
-            var idx = 0;
-            locations.sort(provider_1.Provider._compareLocations).find(function (loc, i) { return loc.uri.toString() === target.toString() && (idx = i) && true; });
-            locations.push.apply(locations, locations.splice(0, idx));
+            // var idx = 0;
+            // locations.sort(Provider._compareLocations).find(function (loc, i) { return loc.uri.toString() === target.toString() && (idx = i) && true; });
+            // locations.push.apply(locations, locations.splice(0, idx));
             readDataProvider.SetDataSources(locations);
             writeDataProvider.SetDataSources(locations);
         });
