@@ -182,71 +182,12 @@ export class TreeProvider implements vscode.TreeDataProvider<NodeInfo>
         }
     }
 
-    public SetDataSources(Locations: vscode.Location[])
+    public SetDataSources(dataSources: LocationSource[])
     {
-        this.dataSources.length = 0;
-        for (let index = 0; index < Locations.length; index++)
-        {
-            const loc = Locations[index];
-            const locSource: LocationSource = {
-                loc: loc,
-                lineText: ""
-            }
-            this.dataSources.push(locSource);
-        }
-
-        this.ProcessLocations()
+        this.dataSources = dataSources;
+        this.Refresh();
     }
 
-
-    private ProcessLocations()
-    {
-        let processCount = 0
-        for (let index = 0; index < this.dataSources.length; index++)
-        {
-            let locSource = this.dataSources[index];
-            let loc = locSource.loc;
-            let uri = loc.uri;
-
-            vscode.workspace.openTextDocument(uri).then((doc: vscode.TextDocument) =>
-            {
-                locSource.lineText = this._appendMatch(doc, loc.range.start.line);
-                vscode.commands.executeCommand('vscode.executeDocumentHighlights', uri, loc.range.start).then((args: any) =>
-                {
-
-                    let documentHighlight: vscode.DocumentHighlight[] = args
-
-                    for (let I = 0; I < documentHighlight.length; I++)
-                    {
-                        const element = documentHighlight[I];
-                        if (loc.range.isEqual(element.range))
-                        {
-                            if (element.kind == vscode.DocumentHighlightKind.Write)
-                            {
-                                locSource.isWrite = true;
-                            } else if (element.kind == vscode.DocumentHighlightKind.Read)
-                            {
-                                locSource.isWrite = false;
-                            }
-                        }
-                    }
-                    processCount++
-
-                    if (processCount >= this.dataSources.length)
-                    {
-                        this.Refresh();
-                    }
-                })
-            })
-        }
-    }
-
-
-    _appendMatch(doc: vscode.TextDocument, line: number)
-    {
-        var text = doc.lineAt(line).text;
-        return text
-    }
 
     getFileNameByPath(path: string)
     {

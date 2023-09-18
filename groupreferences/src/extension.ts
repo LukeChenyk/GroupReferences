@@ -9,21 +9,16 @@ import { decodeLocation, encodeLocation } from './provider';
 export function activate(context: vscode.ExtensionContext)
 {
 
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activated
 	console.log('Congratulations, your extension "groupreferences" is now active!');
 
-	// The command has been defined in the package.json file
-	// Now provide the implementation of the command with registerCommand
-	// The commandId parameter must match the command field in package.json
-	let disposable = vscode.commands.registerCommand('groupreferences.helloWorld', () =>
-	{
-		// The code you place here will be executed every time your command is executed
-		// Display a message box to the user
-		vscode.window.showInformationMessage('Hello World from GroupReferences!I am a new extension of Yuk!');
-	});
+	// let disposable = vscode.commands.registerCommand('groupreferences.helloWorld', () =>
+	// {
+	// 	// The code you place here will be executed every time your command is executed
+	// 	// Display a message box to the user
+	// 	vscode.window.showInformationMessage('Hello World from GroupReferences!I am a new extension of Yuk!');
+	// });
 
-	context.subscriptions.push(disposable);
+	// context.subscriptions.push(disposable);
 
 
 	let lowerCase = vscode.commands.registerCommand('extension.toLowerCase', toLowerCase);
@@ -60,20 +55,23 @@ export function activate(context: vscode.ExtensionContext)
 		var uri = encodeLocation(editor.document.uri, editor.selection.active);
 		var _a = decodeLocation(uri), target = _a[0], pos = _a[1];
 
+		vscode.commands.executeCommand('workbench.view.extension.sidebar_groupreferences');
+
 		return vscode.commands.executeCommand('vscode.executeReferenceProvider', target, pos).then((locationList) =>
 		{
-			//todo: 激活activity bar panel
-			// vscode.commands.executeCommand('workbench.view.extension.groupreferences-sidebar-view');
-
-
 			// sort by locations and shuffle to begin from target resource
-			var locations = locationList as vscode.Location[]
+			var locations = locationList as vscode.Location[];
 			// var idx = 0;
 			// locations.sort(Provider._compareLocations).find(function (loc, i) { return loc.uri.toString() === target.toString() && (idx = i) && true; });
 			// locations.push.apply(locations, locations.splice(0, idx));
 
-			readDataProvider.SetDataSources(locations)
-			writeDataProvider.SetDataSources(locations)
+
+			let dataSources = GenDataSource(locations);
+			ProcessDataSources(dataSources).then(() =>
+			{
+				readDataProvider.SetDataSources(dataSources);
+				writeDataProvider.SetDataSources(dataSources);
+			})
 		});
 
 
@@ -85,9 +83,70 @@ export function activate(context: vscode.ExtensionContext)
 	});
 	// context.subscriptions.push(provider, commandRegistration, providerRegistrations);
 
-	context.subscriptions.push(commandRegistration)
+	context.subscriptions.push(commandRegistration);
 
 }
+
+function GenDataSource(Locations: vscode.Location[]): sidebar.LocationSource[]
+{
+	let dataSources: sidebar.LocationSource[] = [];
+	for (let index = 0; index < Locations.length; index++)
+	{
+		const loc = Locations[index];
+		const locSource: sidebar.LocationSource = {
+			loc: loc,
+			lineText: ""
+		};
+		dataSources.push(locSource);
+	}
+	return dataSources;
+}
+
+function ProcessDataSources(dataSources: sidebar.LocationSource[])
+{
+	return new Promise((resolve, reject) =>
+	{
+		let processCount = 0;
+		for (let index = 0; index < dataSources.length; index++)
+		{
+			let locSource = dataSources[index];
+			let loc = locSource.loc;
+			let uri = loc.uri;
+
+			vscode.workspace.openTextDocument(uri).then((doc: vscode.TextDocument) =>
+			{
+				locSource.lineText = doc.lineAt(loc.range.start.line).text;
+				vscode.commands.executeCommand('vscode.executeDocumentHighlights', uri, loc.range.start).then((args: any) =>
+				{
+
+					let documentHighlight: vscode.DocumentHighlight[] = args;
+
+					for (let I = 0; I < documentHighlight.length; I++)
+					{
+						const element = documentHighlight[I];
+						if (loc.range.isEqual(element.range))
+						{
+							if (element.kind === vscode.DocumentHighlightKind.Write)
+							{
+								locSource.isWrite = true;
+							} else if (element.kind === vscode.DocumentHighlightKind.Read)
+							{
+								locSource.isWrite = false;
+							}
+						}
+					}
+					processCount++;
+
+					if (processCount >= dataSources.length)
+					{
+						resolve && resolve(null);
+					}
+				});
+			});
+		}
+	});
+}
+
 
 function toLowerCase()
 {

@@ -38,7 +38,7 @@
     "commands": [
       {
         "command": "groupreferences.findAllReferences",
-        "title": "Find All References yk"
+        "title": "Find All References and Group"
       },
       {
         "command": "groupreferences.helloWorld",
@@ -94,7 +94,8 @@
     "watch-tests": "tsc -p . -w --outDir out",
     "pretest": "npm run compile-tests && npm run compile && npm run lint",
     "lint": "eslint src --ext ts",
-    "test": "node ./out/test/runTest.js"
+    "test": "node ./out/test/runTest.js",
+    "vsce_package": "vsce package"
   },
   "devDependencies": {
     "@types/vscode": "^1.79.0",
