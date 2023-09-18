@@ -43,6 +43,7 @@ export class NodeItem extends vscode.TreeItem
         } else
         {
             this.iconPath = vscode.ThemeIcon.File;
+            this.resourceUri = info.uri;
             this.description = info.uri.fsPath;
             this.tooltip = info.uri.fsPath;
         }
