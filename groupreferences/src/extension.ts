@@ -66,11 +66,11 @@ export function activate(context: vscode.ExtensionContext)
 			// locations.push.apply(locations, locations.splice(0, idx));
 
 
-			let dataSources = GenDataSource(locations);
-			ProcessDataSources(dataSources).then(() =>
+			let dataSources = genDataSource(locations);
+			processDataSources(dataSources).then(() =>
 			{
-				readDataProvider.SetDataSources(dataSources);
-				writeDataProvider.SetDataSources(dataSources);
+				readDataProvider.setDataSources(dataSources);
+				writeDataProvider.setDataSources(dataSources);
 			})
 		});
 
@@ -87,12 +87,12 @@ export function activate(context: vscode.ExtensionContext)
 
 }
 
-function GenDataSource(Locations: vscode.Location[]): sidebar.LocationSource[]
+function genDataSource(locations: vscode.Location[]): sidebar.LocationSource[]
 {
 	let dataSources: sidebar.LocationSource[] = [];
-	for (let index = 0; index < Locations.length; index++)
+	for (let index = 0; index < locations.length; index++)
 	{
-		const loc = Locations[index];
+		const loc = locations[index];
 		const locSource: sidebar.LocationSource = {
 			loc: loc,
 			lineText: ""
@@ -102,7 +102,7 @@ function GenDataSource(Locations: vscode.Location[]): sidebar.LocationSource[]
 	return dataSources;
 }
 
-function ProcessDataSources(dataSources: sidebar.LocationSource[])
+function processDataSources(dataSources: sidebar.LocationSource[])
 {
 	return new Promise((resolve, reject) =>
 	{
@@ -116,6 +116,23 @@ function ProcessDataSources(dataSources: sidebar.LocationSource[])
 			vscode.workspace.openTextDocument(uri).then((doc: vscode.TextDocument) =>
 			{
 				locSource.lineText = doc.lineAt(loc.range.start.line).text;
+				//去掉前面的空格和tab
+				locSource.lineText = locSource.lineText.trimStart();
+
+				//判断是不是import
+				if (locSource.lineText.startsWith("import "))
+				{
+					locSource.isWrite = false;
+
+					processCount++;
+
+					if (processCount >= dataSources.length)
+					{
+						resolve && resolve(null);
+					}
+					return;
+				}
+
 				vscode.commands.executeCommand('vscode.executeDocumentHighlights', uri, loc.range.start).then((args: any) =>
 				{
 

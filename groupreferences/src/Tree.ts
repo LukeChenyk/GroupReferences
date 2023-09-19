@@ -68,7 +68,7 @@ export class TreeProvider implements vscode.TreeDataProvider<NodeInfo>
         this._isWriteTree = isWrite;
     }
 
-    Refresh()
+    refresh()
     {
         this.refreshEvent?.fire(null);
     }
@@ -183,10 +183,10 @@ export class TreeProvider implements vscode.TreeDataProvider<NodeInfo>
         }
     }
 
-    public SetDataSources(dataSources: LocationSource[])
+    public setDataSources(dataSources: LocationSource[])
     {
         this.dataSources = dataSources;
-        this.Refresh();
+        this.refresh();
     }
 
 
