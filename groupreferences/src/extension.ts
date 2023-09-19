@@ -116,8 +116,6 @@ function processDataSources(dataSources: sidebar.LocationSource[])
 			vscode.workspace.openTextDocument(uri).then((doc: vscode.TextDocument) =>
 			{
 				locSource.lineText = doc.lineAt(loc.range.start.line).text;
-				//去掉前面的空格和tab
-				locSource.lineText = locSource.lineText.trimStart();
 
 				//判断是不是import
 				if (locSource.lineText.startsWith("import "))

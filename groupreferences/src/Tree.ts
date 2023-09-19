@@ -118,10 +118,14 @@ export class TreeProvider implements vscode.TreeDataProvider<NodeInfo>
                     continue;
                 }
 
+                //去掉前面的空格和tab
+                let originText = locSource.lineText;
+                locSource.lineText = locSource.lineText.trimStart();
+                let subLen = originText.length - locSource.lineText.length;
 
                 let treeItemLabel: vscode.TreeItemLabel = {
                     label: locSource.lineText,
-                    highlights: [[loc.range.start.character, loc.range.end.character]]
+                    highlights: [[loc.range.start.character - subLen, loc.range.end.character - subLen]]
                 }
 
                 let info: NodeInfo = {
