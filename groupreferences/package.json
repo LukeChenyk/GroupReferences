@@ -9,9 +9,7 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [
-    "onView:sidebar_test_id1"
-  ],
+  "activationEvents": [],
   "main": "./dist/extension.js",
   "contributes": {
     "viewsContainers": {
@@ -39,22 +37,6 @@
       {
         "command": "groupreferences.findAllReferences",
         "title": "Find All References and Group"
-      },
-      {
-        "command": "groupreferences.helloWorld",
-        "title": "Hello World"
-      },
-      {
-        "command": "extension.toLowerCase",
-        "title": "Lower"
-      },
-      {
-        "command": "extension.toUpperCase",
-        "title": "Upper"
-      },
-      {
-        "command": "groupreferences.referenceItemClk",
-        "title": "referenceItemClk"
       }
     ],
     "menus": {
@@ -63,27 +45,9 @@
           "command": "groupreferences.findAllReferences",
           "when": "editorHasReferenceProvider",
           "group": "navigation"
-        },
-        {
-          "when": "editorHasSelection && editorTextFocus",
-          "command": "extension.toLowerCase",
-          "group": "modification"
-        },
-        {
-          "when": "editorHasSelection && editorTextFocus",
-          "command": "extension.toUpperCase",
-          "group": "modification"
         }
       ]
-    },
-    "keybindings": [
-      {
-        "command": "extension.toUpperCase",
-        "key": "ctrl+shift+u",
-        "mac": "cmd+shift+u",
-        "when": "editorTextFocus"
-      }
-    ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run package",
