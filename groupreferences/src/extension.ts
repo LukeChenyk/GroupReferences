@@ -18,6 +18,8 @@ export function activate(context: vscode.ExtensionContext)
 	const writeDataProvider = new sidebar.TreeProvider(true);
 	vscode.window.registerTreeDataProvider("sidebar_groupreferences_id2", writeDataProvider);
 
+
+	// //注册命令 
 	var commandRegistration = vscode.commands.registerTextEditorCommand('groupreferences.findAllReferences', function (editor: vscode.TextEditor)
 	{
 		var uri = encodeLocation(editor.document.uri, editor.selection.active);
@@ -94,7 +96,6 @@ function processDataSources(dataSources: sidebar.LocationSource[])
 
 				vscode.commands.executeCommand('vscode.executeDocumentHighlights', uri, loc.range.start).then((args: any) =>
 				{
-
 					let documentHighlight: vscode.DocumentHighlight[] = args;
 
 					for (let I = 0; I < documentHighlight.length; I++)
@@ -121,21 +122,6 @@ function processDataSources(dataSources: sidebar.LocationSource[])
 			});
 		}
 	});
-}
-
-
-function OnReferenceItemClkCmd(uri: vscode.Uri)
-{
-	// const showDocOptions = {
-	// 	preserveFocus: false,
-	// 	preview: false,
-	// 	viewColumn: 1,
-
-	// 	// replace with your line_number's
-	// 	selection: new vscode.Range(314, 0, 314, 0)
-	// };
-
-	// let doc = await vscode.window.showTextDocument(setting, showDocOptions);
 }
 
 // This method is called when your extension is deactivated

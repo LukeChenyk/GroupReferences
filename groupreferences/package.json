@@ -9,7 +9,9 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onView:sidebar_test_id1"
+  ],
   "main": "./dist/extension.js",
   "contributes": {
     "viewsContainers": {
@@ -44,7 +46,7 @@
         {
           "command": "groupreferences.findAllReferences",
           "when": "editorHasReferenceProvider",
-          "group": "navigation"
+          "group": "references@1"
         }
       ]
     }
