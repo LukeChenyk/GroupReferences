@@ -74,6 +74,7 @@ function processDataSources(dataSources: sidebar.LocationSource[])
 			let locSource = dataSources[index];
 			let loc = locSource.loc;
 			let uri = loc.uri;
+			locSource.isWrite = false;
 
 			vscode.workspace.openTextDocument(uri).then((doc: vscode.TextDocument) =>
 			{
